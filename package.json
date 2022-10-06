@@ -1,0 +1,19 @@
+{
+  "name": "test-bot",
+  "version": "1.0.0",
+  "description": "a test discord bot",
+  "main": "index.js",
+  "repository": "https://github.com/jace254/discord-test-bot",
+  "author": "JoashAgesa",
+  "license": "MIT",
+  "private": false,
+  "scripts": {
+    "start": "node index.js",
+    "init:commands": "node deploy-commands.js"
+  },
+  "type": "module",
+  "dependencies": {
+    "discord.js": "^14.5.0",
+    "dotenv": "^16.0.3"
+  }
+}
