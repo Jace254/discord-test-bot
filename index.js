@@ -1,8 +1,28 @@
-import { Client, GatewayIntentBits } from "discord.js";
+import { Client, Collection, GatewayIntentBits } from "discord.js";
 import { token } from "./constants.js";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+
+const __dirname = path.dirname(__filename);
 
 try {
   const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+
+  client.commands = new Collection();
+  const commandsPath = path.join(__dirname, "commands");
+  const commandFiles = fs
+    .readdirSync(commandsPath)
+    .filter((file) => file.endsWith(".js"));
+
+  for (const file of commandFiles) {
+    const filePath = path.join("file:///", commandsPath, file);
+    const { command } = await import(filePath);
+
+    client.commands.set(command.data.name, command);
+  }
 
   client.once("ready", () => {
     console.log("Ready!");
@@ -11,18 +31,18 @@ try {
   client.on("interactionCreate", async (interaction) => {
     if (!interaction.isChatInputCommand()) return;
 
-    const { commandName } = interaction;
+    const command = interaction.client.commands.get(interaction.commandName);
 
-    if (commandName === "ping") {
-      await interaction.reply("Pong!");
-    } else if (commandName === "server") {
-      await interaction.reply(
-        `Server name: ${interaction.guild.name}\nTotal members: ${interaction.guild.memberCount}`
-      );
-    } else if (commandName === "user") {
-      await interaction.reply(
-        `Your tag: ${interaction.user.tag}\nYour id: ${interaction.user.id}`
-      );
+    if (!command) return;
+
+    try {
+      await command.execute(interaction);
+    } catch (error) {
+      console.error(error);
+      await interaction.reply({
+        content: "There was an error while executing this command!",
+        ephemeral: true,
+      });
     }
   });
 
